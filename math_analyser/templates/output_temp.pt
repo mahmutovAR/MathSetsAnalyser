@@ -1,0 +1,5 @@
+<ScriptOutputData>
+    <ScriptOutput title="${output_title}">
+        <value>${output_data}</value>
+    </ScriptOutput>
+</ScriptOutputData>
