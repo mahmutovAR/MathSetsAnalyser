@@ -10,7 +10,7 @@ from errors import *
 from math_analyser import ConfigData, MathSet
 
 
-def parse_configuration_data_file(input_file: str) -> 'ConfigData object':
+def parse_configuration_file(input_file: str) -> 'ConfigData object':
     """Checks for the presence of 'config.ini', if the file is not found ConfigFileNotFoundError will be raised.
     Validates the configuration data from the given configuration file.
     Returns ConfigData class object with the main configuration arguments."""
@@ -24,12 +24,12 @@ def parse_configuration_data_file(input_file: str) -> 'ConfigData object':
         section_input = data_from_config_ini['input']
         section_output = data_from_config_ini['output']
 
-        analysis_mode = section_general.get('mode')
-        input_point = section_general.getfloat('point')
-        data_format = section_input.get('format')
-        data_file = section_input.get('path')
-        output_file_format = section_output.get('format')
-        output_file_path = section_output.get('path')
+        config_parameters = {'analysis_mode': section_general.get('mode'),
+                             'input_point': section_general.getfloat('point'),
+                             'data_format': section_input.get('format'),
+                             'data_file': section_input.get('path'),
+                             'output_file_format': section_output.get('format'),
+                             'output_file_path': section_output.get('path')}
     except KeyError as err:
         raise ConfigFileParsingError(f'section [{err}]')
     except ValueError:
@@ -38,8 +38,7 @@ def parse_configuration_data_file(input_file: str) -> 'ConfigData object':
         print(f'Error! The parsing of the configuration file raised an exception:')
         raise
     else:
-        config_data = ConfigData(data_format, data_file, output_file_format,
-                                 output_file_path, analysis_mode, input_point)
+        config_data = ConfigData(**config_parameters)
         config_data.verify_config_data()
     return config_data
 
@@ -50,50 +49,54 @@ def define_data_source_and_get_data(config_data: 'ConfigData object') -> list:
     data_file_path = config_data.get_data_file()
     data_format = config_data.get_data_format()
     try:
-        if data_format == 'JSON':
-            ini_math_sets = get_data_from_json_file(data_file_path)
-        elif data_format == 'TXT':
-            ini_math_sets = get_data_from_txt_file(data_file_path)
-        else:  # elif data_format == 'XML'
-            ini_math_sets = get_data_from_xml_file(data_file_path)
+        with open(data_file_path) as file_to_read:
+            if data_format == 'JSON':
+                ini_math_sets = get_data_from_json_file(file_to_read)
+            elif data_format == 'TXT':
+                ini_math_sets = get_data_from_txt_file(file_to_read)
+            elif data_format == 'XML':
+                ini_math_sets = get_data_from_xml_file(file_to_read)
+            else:
+                assert False, ('Internal error! define_data_source_and_get_data()'
+                               '\ndata_format not JSON / TXT / XML')
     except DataGettingError:
         raise
     except Exception as err:
-        raise DataGettingError(data_file_path, err)
-    return ini_math_sets
+        raise DataGettingError(err)
+    else:
+        if len(ini_math_sets) == 1 and ini_math_sets[0].get_ini_math_ranges() == [("-inf", "+inf")]:
+            raise InfiniteSetError
+        else:
+            return ini_math_sets
 
 
-def get_data_from_json_file(input_path: str) -> list:
+def get_data_from_json_file(input_data: '_io.TextIOWrapper object') -> list:
     """Returns initial math sets from JSON file."""
-    with open(input_path) as json_data_file:
-        json_data = json.load(json_data_file)
+    json_data = json.load(input_data)
     ini_math_sets = list()
     for math_set_name, math_ranges in json_data.items():
         math_ranges = eval(math_ranges)
-        verify_ini_math_sets(input_path, math_set_name, math_ranges)
+        verify_ini_math_sets(math_set_name, math_ranges)
         ini_math_sets.append(MathSet(math_set_name, math_ranges))
     return ini_math_sets
 
 
-def get_data_from_txt_file(input_path: str) -> list:
+def get_data_from_txt_file(input_data: '_io.TextIOWrapper object') -> list:
     """Returns initial math sets from TXT file."""
     ini_math_sets = list()
-    with open(input_path) as txt_data_file:
-        math_set_name = txt_data_file.readline().rstrip()
-        while math_set_name != '':
-            math_ranges = txt_data_file.readline().rstrip()
-            math_ranges = eval(math_ranges)
-            verify_ini_math_sets(input_path, math_set_name, math_ranges)
-            ini_math_sets.append(MathSet(math_set_name, math_ranges))
-            math_set_name = txt_data_file.readline().rstrip()
-
+    math_set_name = input_data.readline().rstrip()
+    while math_set_name != '':
+        math_ranges = input_data.readline().rstrip()
+        math_ranges = eval(math_ranges)
+        verify_ini_math_sets(math_set_name, math_ranges)
+        ini_math_sets.append(MathSet(math_set_name, math_ranges))
+        math_set_name = input_data.readline().rstrip()
     return ini_math_sets
 
 
-def get_data_from_xml_file(input_path: str) -> list:
+def get_data_from_xml_file(input_data: '_io.TextIOWrapper object') -> list:
     """Returns initial math sets from XML file."""
-    with open(input_path) as xml_data_file:
-        data_xml = xml_data_file.read()
+    data_xml = input_data.read()
     bs_object = BeautifulSoup(data_xml, 'lxml')
     all_math_sets = bs_object.find_all('mathset')
     ini_math_sets = list()
@@ -101,13 +104,13 @@ def get_data_from_xml_file(input_path: str) -> list:
         math_set_name = line.get('math_set_name')
         math_ranges = line.find('value').get_text()
         math_ranges = eval(math_ranges)
-        verify_ini_math_sets(input_path, math_set_name, math_ranges)
+        verify_ini_math_sets(math_set_name, math_ranges)
         ini_math_sets.append(MathSet(math_set_name, math_ranges))
     return ini_math_sets
 
 
-def verify_ini_math_sets(data_file_path: str, input_set_name: str, input_ranges: list) -> None:
-    """Validates input subset. There are two kinds of invalid data.
+def verify_ini_math_sets(input_set_name: str, input_ranges: list) -> None:
+    """Validates input math set. There are two kinds of invalid data.
     Invalid syntax:
         - math set is not presented as a "list"
         - math range not specified as "tuple"
@@ -120,61 +123,60 @@ def verify_ini_math_sets(data_file_path: str, input_set_name: str, input_ranges:
     If the check fails, DataGettingError is raised."""
     if not input_ranges:
         error_report = f'No data for math set:\n\t{input_set_name}'
-        raise DataGettingError(data_file_path, error_report)
+        raise DataGettingError(error_report)
 
     elif not isinstance(input_ranges, list):
         error_report = f'Math set is not represented as a list of ranges and points:\n' \
                        f'\t{input_set_name}\n\t{input_ranges}'
-        raise DataGettingError(data_file_path, error_report)
+        raise DataGettingError(error_report)
 
     for subrange in input_ranges:
         if subrange == ('-inf', '+inf') and len(input_ranges) != 1:
             error_report = f'Math set must not contain any ranges if ("-inf", "+inf") is given:\n' \
                            f'\t{input_set_name}\n\t{input_ranges}'
-            raise DataGettingError(data_file_path, error_report)
+            raise DataGettingError(error_report)
         
         elif not isinstance(subrange, tuple) and not isinstance(subrange, int) and not isinstance(subrange, float):
             error_report = f'Math ranges and math points must be given as "tuple" and "int"("float"):\n' \
                            f'\t{input_set_name}\n\t{input_ranges}'
-            raise DataGettingError(data_file_path, error_report)
+            raise DataGettingError(error_report)
 
         elif isinstance(subrange, tuple) and len(subrange) != 2:
             error_report = f'Math range must contain two endpoints::\n' \
                            f'\t{input_set_name}\n\t{input_ranges}'
-            raise DataGettingError(data_file_path, error_report)
+            raise DataGettingError(error_report)
 
         elif isinstance(subrange, tuple):
             endpoint_1, endpoint_2 = subrange
             if endpoint_2 == '-inf':
                 error_report = f'Semi-infinite math range must be given as ("-inf", 12) or (23, "+inf"):\n' \
                                f'\t{input_set_name}\n\t{input_ranges}'
-                raise DataGettingError(data_file_path, error_report)
+                raise DataGettingError(error_report)
 
             elif endpoint_1 == '+inf':
                 error_report = f'Semi-infinite math range must be given as ("-inf", 12) or (23, "+inf"):\n' \
                                f'\t{input_set_name}\n\t{input_ranges}'
-                raise DataGettingError(data_file_path, error_report)
+                raise DataGettingError(error_report)
 
-            elif isinstance(endpoint_1, str) and endpoint_1 not in ['-inf', '+inf']:
+            elif isinstance(endpoint_1, str) and endpoint_1 not in ('-inf', '+inf'):
                 error_report = f'Math ranges must not contain string values other than "-inf" or "+inf":\n' \
                                f'\t{input_set_name}\n\t{input_ranges}'
-                raise DataGettingError(data_file_path, error_report)
+                raise DataGettingError(error_report)
 
-            elif isinstance(endpoint_2, str) and endpoint_2 not in ['-inf', '+inf']:
+            elif isinstance(endpoint_2, str) and endpoint_2 not in ('-inf', '+inf'):
                 error_report = f'Math ranges must not contain string values other than "-inf" or "+inf":\n' \
                                f'\t{input_set_name}\n\t{input_ranges}'
-                raise DataGettingError(data_file_path, error_report)
+                raise DataGettingError(error_report)
 
             elif not isinstance(endpoint_1, str) and not isinstance(endpoint_2, str) and endpoint_1 >= endpoint_2:
                 error_report = f'Start point in the math set must be less than the end point:\n' \
                                f'\t{input_set_name}\n\t{input_ranges}'
-                raise DataGettingError(data_file_path, error_report)
+                raise DataGettingError(error_report)
 
 
 def get_all_initial_numeric_endpoints(ini_math_sets: list) -> set:
     """Returns set with all numeric endpoints of inputted math sets."""
     all_numeric_endpoints = set()
-
     for math_set in ini_math_sets:
         math_set.define_endpoints()
         math_set_numeric_endpoints = math_set.get_numeric_endpoints()
@@ -182,7 +184,6 @@ def get_all_initial_numeric_endpoints(ini_math_sets: list) -> set:
 
     if not all_numeric_endpoints:
         raise InfiniteSetError
-
     return all_numeric_endpoints
 
 
@@ -209,24 +210,25 @@ def get_intersection_of_ini_math_ranges(ini_math_sets: list, set_index: int, sub
         if not subrange_of_intersection:
             raise NoIntersectionError
         return get_intersection_of_ini_math_ranges(ini_math_sets, set_index + 2, subrange_of_intersection)
+
     elif set_index < len(ini_math_sets):
         math_range_1 = ini_math_sets[set_index].get_formatted_math_set()
         subrange_of_intersection = math_range_1.intersection(subrange_of_intersection)
         if not subrange_of_intersection:
             raise NoIntersectionError
         return get_intersection_of_ini_math_ranges(ini_math_sets, set_index + 1, subrange_of_intersection)
+
     elif set_index == len(ini_math_sets):
         return subrange_of_intersection
 
 
 def format_and_sort_math_intersection(math_intersection: set) -> list:
-    """Returns the final set of math ranges and points.
+    """Returns the final list of math ranges and points.
     Duplicate endpoints of math ranges are removed.
     All math ranges and points sorted in ascending order"""
     math_ranges = set()
     math_ranges_endpoints = set()
     math_points = set()
-
     for subrange_of_intersection in math_intersection:
         if isinstance(subrange_of_intersection, tuple):
             math_ranges_endpoints.update(subrange_of_intersection)
@@ -237,9 +239,7 @@ def format_and_sort_math_intersection(math_intersection: set) -> list:
     output_math_points = math_points.difference(math_ranges_endpoints)
     math_ranges.update(output_math_points)
 
-    sorted_math_intersection = list(math_ranges)
-    sorted_math_intersection = sorted(sorted_math_intersection, key=sorting_criterion)
-
+    sorted_math_intersection = sorted(list(math_ranges), key=sorting_criterion)
     return sorted_math_intersection
 
 
@@ -255,9 +255,10 @@ def sorting_criterion(input_subrange):
         return input_subrange
 
 
-def determine_affiliation_of_point_to_intersection(config_data: 'ConfigData object', math_intersection: list) -> None:
+def determine_affiliation_of_point_to_intersection(config_data: 'ConfigData object',
+                                                   math_intersection: list) -> str and list:
     """Determines the subrange of the inputted math intersection that contains initial predetermined point,
-    or the nearest endpoint(s) otherwise. Outputs a file with the result of the script running."""
+    or the nearest endpoint(s) otherwise. Outputs a title and result for output file."""
     subrange_contains_point = None
     point_of_intersection_equal_to_point = None
     nearest_endpoint_to_point = None
@@ -267,7 +268,7 @@ def determine_affiliation_of_point_to_intersection(config_data: 'ConfigData obje
             endpoint_1, endpoint_2 = subrange
             if isinstance(endpoint_1, str) or isinstance(endpoint_2, str):
                 subrange_contains_point = compare_point_and_infinity_range(subrange, given_point)
-                if subrange_contains_point:
+                if subrange_contains_point is not None:
                     break
             elif given_point >= endpoint_1 and given_point <= endpoint_2:
                 subrange_contains_point = subrange
@@ -280,15 +281,21 @@ def determine_affiliation_of_point_to_intersection(config_data: 'ConfigData obje
     if not subrange_contains_point:
         nearest_endpoint_to_point = determine_nearest_endpoint(math_intersection, given_point)
 
-    if subrange_contains_point:
+    if subrange_contains_point is not None:
         script_result_title = 'The subrange of the initial math sets intersection with the predetermined point'
-        output_script_data(config_data, script_result_title, [subrange_contains_point])
-    elif point_of_intersection_equal_to_point:
+        return script_result_title, [subrange_contains_point]
+
+    elif point_of_intersection_equal_to_point is not None:
         script_result_title = 'The point of the initial math sets intersection is the predetermined point'
-        output_script_data(config_data, script_result_title, point_of_intersection_equal_to_point)
-    else:  # elif nearest_endpoint_to_point:
+        return script_result_title, [point_of_intersection_equal_to_point]
+
+    elif nearest_endpoint_to_point is not None:
         script_result_title = 'The nearest endpoint(s) to the predetermined point'
-        output_script_data(config_data, script_result_title, list(nearest_endpoint_to_point))
+        return script_result_title, list(nearest_endpoint_to_point)
+
+    else:
+        assert False, ('Internal error! determine_affiliation_of_point_to_intersection()\nnot subrange_contains_point'
+                       '\nnot point_of_intersection_equal_to_point\nnot nearest_endpoint_to_point')
 
 
 def compare_point_and_infinity_range(input_subrange: tuple, input_point: float) -> tuple:
@@ -347,15 +354,24 @@ def output_script_data(config_data: 'ConfigData object', output_title: str, outp
     The file type and path are determined from the inputted ConfigData object."""
     output_file_format = config_data.get_output_file_format()
     output_file_path = config_data.get_output_file_path()
-
     try:
         output_file_path = choose_name_for_output_file(output_file_format, output_file_path)
-        if output_file_format == 'json':
-            generate_json_output_file(output_file_path, output_title, output_data)
-        elif output_file_format == 'txt':
-            generate_txt_output_file(output_file_path, output_title, output_data)
-        else:  # elif output_file_format == 'xml':
-            generate_xml_output_file(output_file_path, output_title, output_data)
+        with open(output_file_path, 'w') as file_to_write:
+            if output_file_format == 'json':
+                json.dump({output_title: str(output_data)}, file_to_write)
+
+            elif output_file_format == 'txt':
+                file_to_write.write(f'{output_title}\n{output_data}')
+
+            elif output_file_format == 'xml':
+                template = PageTemplateLoader(os_path_join(abspath(dirname(__file__)), 'math_analyser', 'templates'))
+                tmpl = template['output_temp.pt']
+                data_for_xml = tmpl(output_title=output_title, output_data=output_data)
+                file_to_write.write(data_for_xml)
+
+            else:
+                assert False, ('Internal error! output_script_data()'
+                               '\noutput_file_format not JSON / TXT / XML')
     except Exception as err:
         raise OutputFileGeneratingError(output_file_path, err)
 
@@ -371,24 +387,3 @@ def choose_name_for_output_file(file_format: str, file_path: str) -> str:
         return f'{temp_file_path}({num}).{file_format}'
     else:
         return f'{temp_file_path}.{file_format}'
-
-
-def generate_json_output_file(output_file_path: str, title: str, data: list) -> None:
-    """Generates on given path the JSON file with inputted title and data."""
-    with open(output_file_path, 'w') as json_data_file:
-        json.dump({title: str(data)}, json_data_file)
-
-
-def generate_txt_output_file(output_file_path: str, title: str, data: list) -> None:
-    """Generates on given path the TXT file with inputted title and data."""
-    with open(output_file_path, 'w') as txt_output_file:
-        txt_output_file.write(f'{title}\n{data}')
-
-
-def generate_xml_output_file(output_file_path: str, title: str, data: list) -> None:
-    """Generates on given path the XML file with inputted title and data."""
-    template = PageTemplateLoader(os_path_join(abspath(dirname(__file__)), 'math_analyser', 'templates'))
-    tmpl = template['output_temp.pt']
-    with open(output_file_path, 'w') as xml_output_file:
-        data_for_xml = tmpl(output_title=title, output_data=data)
-        xml_output_file.write(data_for_xml)

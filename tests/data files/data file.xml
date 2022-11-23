@@ -1,0 +1,29 @@
+<InitialData>
+    <MathSet math_set_name="set_type_1">
+        <value>[('-inf', '+inf')]</value>
+    </MathSet>
+    <MathSet math_set_name="set_type_2">
+        <value>[('-inf', -10.37), (10.41, '+inf')]</value>
+    </MathSet>
+    <MathSet math_set_name="set_type_3">
+        <value>[('-inf', 99.4)]</value>
+    </MathSet>
+    <MathSet math_set_name="set_type_4">
+        <value>[(-98, '+inf')]</value>
+    </MathSet>
+    <MathSet math_set_name="set_type_5">
+        <value>[('-inf', -32.08), (-17, 22.2), (54, 57)]</value>
+    </MathSet>
+    <MathSet math_set_name="set_type_6">
+        <value>[('-inf', -41), (-18, 24), (51, 62), (103, '+inf')]</value>
+    </MathSet>
+    <MathSet math_set_name="set_type_7">
+        <value>[(-89.11, -61.07), (-24.9, '+inf')]</value>
+    </MathSet>
+    <MathSet math_set_name="set_type_8">
+        <value>[(-77, 61.04), 54]</value>
+    </MathSet>
+    <MathSet math_set_name="set_type_9">
+        <value>[(-89, -61), (-43, -12), (10, 27), (61, 72)]</value>
+    </MathSet>
+</InitialData>

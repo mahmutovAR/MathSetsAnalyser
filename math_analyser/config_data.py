@@ -32,11 +32,11 @@ class ConfigData:
         else:
             raise ConfigFileParsingError('"mode" in the section [general]')
 
-        if self.__data_format not in ['JSON', 'TXT', 'XML']:
+        if self.__data_format not in ('JSON', 'TXT', 'XML'):
             raise ConfigFileParsingError('"format" in the section [input]')
 
-        file_path, file_type = splitext(self.__data_file)
-        if file_type and file_type[1:] != self.__data_format.lower():
+        input_file_path, input_file_type = splitext(self.__data_file)
+        if input_file_type and input_file_type[1:] != self.__data_format.lower():
             raise ConfigFileParsingError('"format" and "path" in the section [input]')
 
         if not self.__data_file:
@@ -44,7 +44,7 @@ class ConfigData:
         if not isfile(normpath(self.__data_file)):
             raise DataFileNotFoundError(self.__data_file)
 
-        if self.__output_file_format not in ['json', 'txt', 'xml']:
+        if self.__output_file_format not in ('json', 'txt', 'xml'):
             raise ConfigFileParsingError('"format" in the section [output]')
 
         if not self.__output_file_path:
@@ -52,6 +52,10 @@ class ConfigData:
         output_dir = dirname(self.__output_file_path)
         if not isdir(normpath(output_dir)):
             raise OutputDirectoryNotFoundError(output_dir)
+
+        output_file_path, output_file_type = splitext(self.__output_file_path)
+        if output_file_type and output_file_type[1:] != self.__output_file_format.lower():
+            raise ConfigFileParsingError('"format" and "path" in the section [output]')
 
     def get_data_format(self) -> str:
         """Returns the data file format."""

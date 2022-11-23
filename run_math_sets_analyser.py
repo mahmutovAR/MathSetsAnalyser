@@ -20,8 +20,11 @@ def main(script_config_data: 'ConfigData object'):
     """
     if script_config_data.get_analysis_mode() == 'INTS':
         process_mode_intersection(script_config_data)
-    else:  # elif config_data.get_analysis_mode() == 'AFFL'
+    elif script_config_data.get_analysis_mode() == 'AFFL':
         process_mode_affiliation(script_config_data)
+    else:
+        assert False, ('Internal error! main()'
+                       '\nscript_config_data.get_analysis_mode() not INTS / AFFL')
 
 
 def determine_initial_math_sets_intersection(script_config_data: 'ConfigData object'):
@@ -41,19 +44,21 @@ def determine_initial_math_sets_intersection(script_config_data: 'ConfigData obj
 
 def process_mode_intersection(script_config_data: 'ConfigData object'):
     """Determines and outputs file with the intersection of initial math sets."""
-    ini_math_intersection = determine_initial_math_sets_intersection(script_config_data)
-    script_result_title = 'The intersection of initial math sets'
-    output_script_data(script_config_data, script_result_title, ini_math_intersection)
+    sorted_math_intersection = determine_initial_math_sets_intersection(script_config_data)
+    result_title = 'The intersection of initial math sets'
+    output_script_data(script_config_data, result_title, sorted_math_intersection)
 
 
 def process_mode_affiliation(script_config_data: 'ConfigData object'):
     """Determines and outputs file with the nearest endpoint(s) to predetermined point."""
-    ini_math_intersection = determine_initial_math_sets_intersection(script_config_data)
-    determine_affiliation_of_point_to_intersection(script_config_data, ini_math_intersection)
+    sorted_math_intersection = determine_initial_math_sets_intersection(script_config_data)
+    result_title, result_data = determine_affiliation_of_point_to_intersection(script_config_data,
+                                                                               sorted_math_intersection)
+    output_script_data(script_config_data, result_title, result_data)
 
 
 if __name__ == '__main__':
     base_dir = Path(__file__).resolve().parent
     configuration_file_path = os_path_join(base_dir, 'config.ini')
-    configuration_data = parse_configuration_data_file(configuration_file_path)
+    configuration_data = parse_configuration_file(configuration_file_path)
     main(configuration_data)

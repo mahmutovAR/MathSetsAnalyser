@@ -14,9 +14,26 @@ Script returns the predetermined **point**, if it belongs to the initial **math 
 or the nearest endpoint(s) to the predetermined **point** otherwise.
 ***
 
-## To run MathSetsAnalyser:
-1. Add `config.ini` to the script directory
-2. Run `math_sets_analyser_run.py`
+## Installation
+**Requirements**
+* `Python` 3.9+
+* `bs4` (tested to work with >= 0.0.1)
+* `chameleon` (tested to work with >= 3.9.1)  
+
+**Note:** The `bs4` and `chameleon` packages can be installed by running `python3 -m pip install -r requirements.txt`
+***
+
+## Running MathSetsAnalyser
+For use **as plug-ins** `import math_sets_analyser`
+
+For math analysis of input data **as a script**:
+* create `config.ini` in the script directory  
+* run `python3 run_math_sets_analyser.py`
+
+**For generating sample** configuration and data files run `.trial_run/trial_math_sets_analyser.py`,  
+an output file for the input data will also be created.
+
+**For testing** MathSetsAnalyser run `python3 -m unittest -v test_math_sets_analyser.py`
 ***
 
 ### The configuration file `config.ini` has the following structure:
@@ -39,11 +56,11 @@ mode = INTS
 
 [input]
 format = TXT
-path = ../../data files/input math sets
+path = ../data files/input math sets
 
 [output]
 format = XML
-path = ../../script output files/script report.xml
+path = ../script output files/result.xml
 ```
 
 ### Example of `config.ini` for `AFFILIATION` mode
@@ -54,11 +71,11 @@ point = 1.247
 
 [input]
 format = JSON
-path = ../../data files/input math sets
+path = ../data files/input math sets
 
 [output]
 format = TXT
-path = ../../script output files/script report
+path = ../script output files/result
 ```
 ***
 
@@ -133,17 +150,11 @@ The nearest endpoint(s) to the predetermined point
 ***
 
 ### Files and directories:
-* `math_sets_analyser.py` plug-in module
-- `math_sets_analyser_run.py` module launch script
-* `math_sets_analyser_tests.py` unittest script
-- `./errors` script exception package
-* `./math_analyser` auxiliary modules package
-- `./tests` test module package
-***
-
-## Script runs on Python 3.9, with next modules:
-* `configparser`, `copy`, `json`, `os`, `pathlib` (standard libraries)
-* `argparse`, `bs4`, `chameleon` (3rd party libraries)
-
-### Test of MathSetsAnalyser runs with next modules:
-* `tempfile`, `unittest` (standard libraries)
+* `math_sets_analyser.py` plug-in modules
+- `run_math_sets_analyser.py` math_sets_analyser launcher
+* `test_math_sets_analyser.py` tests
+- `requirements.txt` required packages  
+* `./errors` script exception package
+- `./math_analyser` auxiliary modules package
+* `./tests` test module package
+- `.trial_run/trial_math_sets_analyser.py` script to generate sample source files
