@@ -2,9 +2,6 @@ from configparser import ConfigParser
 from os.path import abspath, dirname
 from os.path import join as os_path_join
 
-import math_sets_analyser
-import run_math_sets_analyser
-
 
 def generate_config_file(input_file_path: str, input_data: dict) -> None:
     """Generates config file for AFFL mode at given path."""
