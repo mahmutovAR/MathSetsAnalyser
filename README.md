@@ -19,8 +19,16 @@ or the nearest endpoint(s) to the predetermined **point** otherwise.
 * `Python` 3.9+
 * `bs4` (tested to work with >= 0.0.1)
 * `chameleon` (tested to work with >= 3.9.1)  
+* `lxml` (tested to work with >=4.8.0)
 
-**Note:** The `bs4` and `chameleon` packages can be installed by running `python3 -m pip install -r requirements.txt`
+**Note:** The `bs4` `chameleon` `lxml` packages can be installed by running `python -m pip install -r requirements.txt`
+***
+
+## Quick Start Guide
+1. Run the `create_sample.py` script.  
+It will create the `config.ini` sample configuration file and the `data file.txt` file with sample data.
+2. Then, run the `run_math_sets_analyser.py` script.  
+A new file `script_result.xml` will be created that contains the calculation results.
 ***
 
 ## Running MathSetsAnalyser
@@ -28,12 +36,9 @@ For use **as plug-ins** `import math_sets_analyser`
 
 For math analysis of input data **as a script**:
 * create `config.ini` in the script directory  
-* run `python3 run_math_sets_analyser.py`
+* run `python run_math_sets_analyser.py`  
 
-**For generating sample** configuration and data files run `.trial_run/trial_math_sets_analyser.py`,  
-an output file for the input data will also be created.
-
-**For testing** MathSetsAnalyser run `python3 -m unittest -v test_math_sets_analyser.py`
+**For testing** MathSetsAnalyser run `python -m unittest -v test_math_sets_analyser.py`
 ***
 
 ### The configuration file `config.ini` has the following structure:
@@ -150,6 +155,7 @@ The nearest endpoint(s) to the predetermined point
 ***
 
 ### Files and directories:
+- `create_sample.py` script to generate sample source files
 * `math_sets_analyser.py` plug-in modules
 - `run_math_sets_analyser.py` math_sets_analyser launcher
 * `test_math_sets_analyser.py` tests
@@ -157,4 +163,3 @@ The nearest endpoint(s) to the predetermined point
 * `./errors` script exception package
 - `./math_analyser` auxiliary modules package
 * `./tests` test module package
-- `.trial_run/trial_math_sets_analyser.py` script to generate sample source files
