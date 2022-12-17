@@ -56,7 +56,7 @@ def main():
         print(f'Error! Generating the "config.ini" and data file raised an exception:')
         raise
     else:
-        print('Created configuration files "config.ini" and "data file.txt".')
+        print('Created configuration file "config.ini" and data file "data file.txt".')
 
 
 if __name__ == '__main__':
