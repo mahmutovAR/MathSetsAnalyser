@@ -85,12 +85,14 @@ def get_data_from_txt_file(input_data: '_io.TextIOWrapper object') -> list:
     """Returns initial math sets from TXT file."""
     ini_math_sets = list()
     math_set_name = input_data.readline().rstrip()
-    while math_set_name != '':
+    while True:
         math_ranges = input_data.readline().rstrip()
         math_ranges = eval(math_ranges)
         verify_ini_math_sets(math_set_name, math_ranges)
         ini_math_sets.append(MathSet(math_set_name, math_ranges))
         math_set_name = input_data.readline().rstrip()
+        if not math_set_name:
+            break
     return ini_math_sets
 
 
@@ -277,8 +279,7 @@ def determine_affiliation_of_point_to_intersection(config_data: 'ConfigData obje
             if given_point == subrange:
                 point_of_intersection_equal_to_point = subrange
                 break
-
-    if not subrange_contains_point:
+    else:
         nearest_endpoint_to_point = determine_nearest_endpoint(math_intersection, given_point)
 
     if subrange_contains_point is not None:
