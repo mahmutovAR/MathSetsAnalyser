@@ -11,7 +11,7 @@ Script returns the intersection of the initial **math sets**.
 
 ### Mode `AFFILIATION` (`AFFL` in `config.ini`) analyzes the math sets and predetermined point.
 Script returns the predetermined **point**, if it belongs to the initial **math sets intersection**,  
-or the nearest endpoint(s) to the predetermined **point** otherwise.
+or the closest endpoint(s) to the predetermined **point** otherwise.
 ***
 
 ## Installation
@@ -21,8 +21,9 @@ or the nearest endpoint(s) to the predetermined **point** otherwise.
 * `chameleon` (tested to work with >= 3.9.1)  
 * `lxml` (tested to work with >=4.8.0)
 
-**Note:** The `bs4` `chameleon` `lxml` packages can be installed by running `python -m pip install -r requirements.txt`
+**Note:** The `bs4` `chameleon` `lxml` packages can be installed by running `python3 -m pip install -r requirements.txt`
 ***
+
 
 ## Quick Start Guide
 1. Run the `create_sample.py` script.  
@@ -32,10 +33,9 @@ A new file `script_result.xml` will be created that contains the calculation res
 ***
 
 ## Running MathSetsAnalyser
-For use **as plug-ins** `import math_sets_analyser`
-
 For math analysis of input data **as a script**:
-* create `config.ini` in the script directory  
+* create `config.ini`   
+* create data file with initial math sets  
 * run `python run_math_sets_analyser.py`  
 
 **For testing** MathSetsAnalyser run `python -m unittest -v test_math_sets_analyser.py`
@@ -48,11 +48,11 @@ point (for `AFFL` mode only)
 
 `[input]`  
 type of the data file: `JSON` `TXT` `XML`  
-path of the data file
+path to the data file
 
 `[output]`  
 type of the output file: `JSON` `TXT` `XML`  
-path of the output file (including name of the file)
+path to the output file (including name of the file)
 
 ### Example of `config.ini` for `INTERSECTION` mode
 ```
@@ -84,82 +84,71 @@ path = ../script output files/result
 ```
 ***
 
-### The data file contains the initial math sets and their names.
+### The data file contains the initial math sets.
 
 Each initial **math set** is given as `list` of ranges and points.  
 The **math range** is given as `tuple` and **math point** is given as `int` or `float`  
-The **minus infinity** is given as `"-inf"`  
-The **plus infinity** is given as `"+inf"`  
+The `-inf` is given as `float('-inf')`  
+The `+inf` is given as `float('inf')`  
 **Note:** For `JSON` data file initial **math set** is given as `str` object. So check the use of `' '` and `" "`
 
 Examples of initial **math sets** for `TXT` and `XML` data file:  
-`[("-inf", -10.02), (10.97, "+inf")]`  
-`[('-inf', -41), -18, (51, 62.01), 77.34, (103.0,  '+inf')]`  
+`[(float("-inf"), -10.02), (10.97, float("inf"))]`  
+`[(float('-inf'), -41), -18, (51, 62.01), 77.34, (103.0,  float('inf'))]`  
 `[(-89, -61), (61, 72)]`  
 `[14.021]`
 
 Examples of initial **math sets** for `JSON` data file:    
-`"[('-inf', -10.02), (10.97, '+inf')]"`  
-`"[('-inf', -41), -18, (51, 62.01), 77.34, (103.0,  '+inf')]"`  
+`"[(float('-inf'), -10.02), (10.97, float('+inf'))]"`  
+`"[float(('-inf'), -41), -18, (51, 62.01), 77.34, (103.0,  float('inf'))]"`  
 `"[(-89, -61), (61, 72)]"`  
 `"[14.021]"`
 
 ### Example of `JSON` data file
 ```
-{
-	"math_set_1": "[('-inf', -132), -89.61, (-24, '+inf')]",
-	"math_set_2": "[(-43, -12), (10, 27)]"
-}
+[
+	"[float(('-inf'), -132), -89.61, (-24, float('inf'))]",
+	"[(-43, -12), (10, 27)]"
+]
 ```
 
 ### Example of `TXT` data file
 ```
-math_set_1
-[("-inf", -132), -89.61, (-24, "+inf")]
-math_set_2
+[(float("-inf"), -132), -89.61, (-24, float("inf"))]
 [(-43, -12), (10, 27)]
 ```
 
 ### Example of `XML` data file
 ```
-<InitialData>
-    <MathSet math_set_name="math_set_1">
-        <value>[("-inf", -132), -89.61, (-24, "+inf")]</value>
-    </MathSet>
-    <MathSet math_set_name="math_set_2">
-        <value>[(-43, -12), (10, 27)]</value>
-    </MathSet>
-</InitialData>
+<MathSets>
+    <value>[(float("-inf"), -132), -89.61, (-24, float("inf"))]</value>
+    <value>[(-43, -12), (10, 27)]</value>
+</MathSets>
 ```
 ***
+
 ### Examples of the output file
 `JSON` format (`AFFILIATION` mode)
 ```
-{
-	"The subrange of the initial math sets intersection with the predetermined point": "[(10, 22)]"
-}
+"[(10, 22)]"
 ```
 `TXT` format (`AFFILIATION` mode)
 ```
-The nearest endpoint(s) to the predetermined point
 [-12, 10]
 ```
 `XML` format (`INTERSECTION` mode)
 ```
-<ScriptOutputData>
-    <ScriptOutput title="The intersection of initial math sets">
-        <value>[(-77, -61), (-17, -12), (10, 22)]</value>
-    </ScriptOutput>
-</ScriptOutputData>
+<OutputData>
+    <value>[(-77, -61), (-17, -12), (10, 22)]</value>
+</OutputData>
 ```
 ***
 
 ### Files and directories:
-- `create_sample.py` script to generate sample source files
-* `math_sets_analyser.py` plug-in modules
+* `create_sample.py` script to generate sample source files
 - `run_math_sets_analyser.py` math_sets_analyser launcher
 * `test_math_sets_analyser.py` tests
 - `requirements.txt` required packages  
-* `./errors` script exception package
-- `./math_analyser` auxiliary modules package
+* `./errors` exception package
+- `./math_analyser` plug-in modules
 * `./tests` test module package

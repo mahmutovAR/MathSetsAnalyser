@@ -1,5 +1,0 @@
-<InitialData>
-    <MathSet tal:condition="ini_data" tal:repeat="ini_name ini_data" math_set_name="${ini_name}">
-        <value>${ini_data[ini_name]}</value>
-    </MathSet>
-</InitialData>

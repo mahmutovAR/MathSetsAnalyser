@@ -1,13 +1,16 @@
-from errors import ConfigFileParsingError, DataFileNotFoundError, OutputDirectoryNotFoundError
+from configparser import ConfigParser
 from os.path import dirname, isdir, isfile, normpath, splitext
 
+from errors import (ConfigFileNotFoundError, ConfigFileParsingError,
+                    DataFileNotFoundError, OutputDirectoryNotFoundError)
 
-class ConfigData:
+
+class ConfigFileData:
     __slots__ = ['__data_format', '__data_file', '__output_file_format',
-                 '__output_file_path', '__analysis_mode', '__input_point']
+                 '__output_file_path', '__analysis_mode', '__math_point']
 
     def __init__(self, data_format, data_file, output_file_format,
-                 output_file_path, analysis_mode, input_point):
+                 output_file_path, analysis_mode, math_point):
         """Creates an object of the ConfigData class,
         assigns values to the main script parameters from a configuration file."""
         self.__data_format = data_format.upper()
@@ -15,7 +18,7 @@ class ConfigData:
         self.__output_file_format = output_file_format.lower()
         self.__output_file_path = output_file_path
         self.__analysis_mode = analysis_mode.upper()
-        self.__input_point = input_point
+        self.__math_point = math_point
 
     def verify_config_data(self) -> None:
         """Validates configuration data.
@@ -24,11 +27,16 @@ class ConfigData:
         The data file and output file directory are checked for existence.
         If the check fails, an appropriate exception will be raised."""
         if self.__analysis_mode == 'AFFL':
-            if not self.__input_point:
+            if not self.__math_point:
                 raise ConfigFileParsingError('"point" in the section [general]')
-            self.__input_point = float(self.__input_point)
+            if self.__math_point == float('-inf') or self.__math_point == float('inf'):
+                raise ConfigFileParsingError('"point" in the section [general]')
+            try:
+                self.__math_point = float(self.__math_point)
+            except Exception:
+                raise ConfigFileParsingError('"point" in the section [general]')
         elif self.__analysis_mode == 'INTS':
-            self.__input_point = None
+            self.__math_point = None
         else:
             raise ConfigFileParsingError('"mode" in the section [general]')
 
@@ -77,6 +85,39 @@ class ConfigData:
         """Returns the analysis mode."""
         return self.__analysis_mode
 
-    def get_input_point(self) -> float:
+    def get_math_point(self) -> float:
         """Returns the math point value."""
-        return self.__input_point
+        return self.__math_point
+
+
+def parse_configuration_file(input_file: str) -> ConfigFileData:
+    """Checks for the presence of 'config.ini', if the file is not found ConfigFileNotFoundError will be raised.
+    Validates the configuration data from the given configuration file.
+    Returns ConfigData class object with the main configuration arguments."""
+    if not isfile(input_file):
+        raise ConfigFileNotFoundError(input_file)
+    try:
+        data_from_config_ini = ConfigParser()
+        data_from_config_ini.read(input_file)
+
+        section_general = data_from_config_ini['general']
+        section_input = data_from_config_ini['input']
+        section_output = data_from_config_ini['output']
+
+        config_parameters = {'analysis_mode': section_general.get('mode'),
+                             'math_point': section_general.getfloat('point'),
+                             'data_format': section_input.get('format'),
+                             'data_file': section_input.get('path'),
+                             'output_file_format': section_output.get('format'),
+                             'output_file_path': section_output.get('path')}
+    except KeyError as err:
+        raise ConfigFileParsingError(f'section [{err}]')
+    except ValueError:
+        raise ConfigFileParsingError('"point" in the section [general]')
+    except Exception:
+        print(f'Error! The parsing of the configuration file raised an exception:')
+        raise
+    else:
+        config_file_data = ConfigFileData(**config_parameters)
+        config_file_data.verify_config_data()
+    return config_file_data

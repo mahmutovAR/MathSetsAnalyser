@@ -1,6 +1,7 @@
 from pathlib import Path
+from os.path import join as os_path_join
 
-from math_sets_analyser import *
+from math_analyser import *
 
 
 def main(script_config_data: 'ConfigData object'):
@@ -27,34 +28,28 @@ def main(script_config_data: 'ConfigData object'):
                        '\nscript_config_data.get_analysis_mode() not INTS / AFFL')
 
 
-def determine_initial_math_sets_intersection(script_config_data: 'ConfigData object'):
+def determine_initial_math_sets_intersection(script_config_data: 'ConfigData object') -> list:
     """Returns sorted intersection of initial math sets."""
-    initial_math_sets = define_data_source_and_get_data(script_config_data)
-    if len(initial_math_sets) == 1:
-        return initial_math_sets[0].get_ini_math_ranges()
-
-    all_ini_numeric_endpoints = get_all_initial_numeric_endpoints(initial_math_sets)
-    format_ranges_using_all_ini_numeric_endpoints(all_ini_numeric_endpoints, initial_math_sets)
-    ini_math_intersection = get_intersection_of_ini_math_ranges(initial_math_sets, 0, set())
-    if ini_math_intersection:
-        return format_and_sort_math_intersection(ini_math_intersection)
-    else:
-        raise NoIntersectionError
+    ini_math_sets = get_initial_math_sets(script_config_data)
+    math_sets_intersection = determine_intersection_of_ini_math_ranges(ini_math_sets,
+                                                                       0, list())
+    if not math_sets_intersection:
+        return [None]
+    return math_sets_intersection
 
 
 def process_mode_intersection(script_config_data: 'ConfigData object'):
     """Determines and outputs file with the intersection of initial math sets."""
-    sorted_math_intersection = determine_initial_math_sets_intersection(script_config_data)
-    result_title = 'The intersection of initial math sets'
-    output_script_data(script_config_data, result_title, sorted_math_intersection)
+    math_sets_intersection = determine_initial_math_sets_intersection(script_config_data)
+    output_script_data(script_config_data, math_sets_intersection)
 
 
 def process_mode_affiliation(script_config_data: 'ConfigData object'):
     """Determines and outputs file with the nearest endpoint(s) to predetermined point."""
-    sorted_math_intersection = determine_initial_math_sets_intersection(script_config_data)
-    result_title, result_data = determine_affiliation_of_point_to_intersection(script_config_data,
-                                                                               sorted_math_intersection)
-    output_script_data(script_config_data, result_title, result_data)
+    math_intersection = determine_initial_math_sets_intersection(script_config_data)
+    math_point = script_config_data.get_math_point()
+    result_data = determine_closest_point_of_math_intersection(math_point, math_intersection, 0, len(math_intersection))
+    output_script_data(script_config_data, result_data)
 
 
 if __name__ == '__main__':

@@ -1,5 +1,3 @@
-<ScriptOutputData>
-    <ScriptOutput title="${output_title}">
-        <value>${output_data}</value>
-    </ScriptOutput>
-</ScriptOutputData>
+<OutputData>
+    <value>${output_data}</value>
+</OutputData>
