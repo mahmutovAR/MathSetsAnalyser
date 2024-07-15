@@ -17,11 +17,12 @@ or the closest endpoint(s) to the predetermined **point** otherwise.
 ## Installation
 **Requirements**
 * `Python` 3.9+
-* `bs4` (tested to work with >= 0.0.1)
-* `chameleon` (tested to work with >= 3.9.1)  
-* `lxml` (tested to work with >=4.8.0)
+* `bs4` (tested to work with >= 0.0.2)
+* `chameleon` (tested to work with >= 4.5.4)  
+* `lxml` (tested to work with >=5.1.0)
+* `pytest` (tested to work with ==8.2.2)  
 
-**Note:** The `bs4` `chameleon` `lxml` packages can be installed by running `python3 -m pip install -r requirements.txt`
+**Note:** The packages can be installed by running `python3 -m pip install -r requirements.txt`
 ***
 
 
@@ -38,7 +39,7 @@ For math analysis of input data **as a script**:
 * create data file with initial math sets  
 * run `python run_math_sets_analyser.py`  
 
-**For testing** MathSetsAnalyser run `python -m unittest -v test_math_sets_analyser.py`
+**For testing** MathSetsAnalyser run `pytest`
 ***
 
 ### The configuration file `config.ini` has the following structure:

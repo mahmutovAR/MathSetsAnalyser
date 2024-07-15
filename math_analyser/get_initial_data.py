@@ -2,7 +2,7 @@ from json import load as json_load
 
 from bs4 import BeautifulSoup
 
-from errors import *
+from errors import DataFileError
 
 
 def get_initial_math_sets(config_data: 'ConfigData object') -> list:
@@ -21,10 +21,9 @@ def get_initial_math_sets(config_data: 'ConfigData object') -> list:
             else:
                 assert False, ('Internal error! define_data_source_and_get_data()'
                                '\ndata_format not JSON / TXT / XML')
-    except DataGettingError:
-        raise
     except Exception as err:
-        raise DataGettingError(err)
+        err.add_note('Initial Data Getting Error')
+        raise
     else:
         return ini_math_sets
 
@@ -76,48 +75,32 @@ def verify_ini_math_sets(input_ranges: list) -> None:
         - invalid semi-infinite or numeric math range (start point is not less than the end point)
     If the check fails, DataGettingError is raised."""
     if not input_ranges:
-        error_report = f'No data'
-        raise DataGettingError(error_report)
+        raise DataFileError('No data in file')
 
     elif not isinstance(input_ranges, list):
-        error_report = f'Math set is not represented as a list of ranges and points:\n' \
-                       f'\t{input_ranges}'
-        raise DataGettingError(error_report)
+        raise DataFileError(f'Math set is not represented as a list of ranges and points:\n{input_ranges}')
 
     for subrange in input_ranges:
         if subrange == (float('-inf'), float('inf')) and len(input_ranges) != 1:
-            error_report = f"Math set must not contain any ranges if (float('-inf'), float('inf')) is given:\n" \
-                           f'\t{input_ranges}'
-            raise DataGettingError(error_report)
+            raise DataFileError(f'Math set must not contain any ranges if '
+                                f'(float(\'-inf\'), float(\'inf\')) is given:\t{input_ranges}')
         
         elif not isinstance(subrange, tuple) and not isinstance(subrange, int) and not isinstance(subrange, float):
-            error_report = f'Math ranges and math points must be given as "tuple" and "int"("float"):\n' \
-                           f'\t{input_ranges}'
-            raise DataGettingError(error_report)
+            raise DataFileError(f'Math ranges and math points must be given '
+                                f'as "tuple" and "int"("float"):\n{input_ranges}')
 
         elif isinstance(subrange, tuple) and len(subrange) != 2:
-            error_report = f'Math range must contain two endpoints::\n' \
-                           f'\t{input_ranges}'
-            raise DataGettingError(error_report)
+            raise DataFileError(f'Math range must contain two endpoints::\n\t{input_ranges}')
 
         elif isinstance(subrange, tuple):
             endpoint_1, endpoint_2 = subrange
-            if endpoint_2 == float('-inf'):
-                error_report = f"Semi-infinite math range must be given as (float('-inf'), 12) or (23, float('inf'):\n" \
-                               f'\t{input_ranges}'
-                raise DataGettingError(error_report)
-
-            elif endpoint_1 == float('inf'):
-                error_report = f"Semi-infinite math range must be given as (float('-inf'), 12) or (23, float('inf'):\n" \
-                               f'\t{input_ranges}'
-                raise DataGettingError(error_report)
-
-            elif isinstance(endpoint_1, str) or isinstance(endpoint_2, str):
-                error_report = f"Semi-infinite math range must be given as (float('-inf'), 12) or (23, float('inf'):\n" \
-                               f'\t{input_ranges}'
-                raise DataGettingError(error_report)
+            if (endpoint_2 == float('-inf')
+                    or endpoint_1 == float('inf')
+                    or isinstance(endpoint_1, str)
+                    or isinstance(endpoint_2, str)):
+                raise DataFileError(f'Semi-infinite math range must be given as'
+                                    f' (float(\'-inf\'), 12) or (23, float(\'inf\'):\n{input_ranges}')
 
             elif endpoint_1 >= endpoint_2:
-                error_report = f'Start point in the math set must be less than the end point:\n' \
-                               f'\t{input_ranges}'
-                raise DataGettingError(error_report)
+                raise DataFileError(f'Start point in the math set must be less '
+                                    f'than the end point:\n{input_ranges}')

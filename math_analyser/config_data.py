@@ -1,24 +1,22 @@
 from configparser import ConfigParser
 from os.path import dirname, isdir, isfile, normpath, splitext
 
-from errors import (ConfigFileNotFoundError, ConfigFileParsingError,
-                    DataFileNotFoundError, OutputDirectoryNotFoundError)
+from errors import ConfigFileError, DataFileError, OutputDataError
+
+PARSING_ERROR = 'contains data that is not specified or is invalid: '
 
 
 class ConfigFileData:
-    __slots__ = ['__data_format', '__data_file', '__output_file_format',
-                 '__output_file_path', '__analysis_mode', '__math_point']
-
     def __init__(self, data_format, data_file, output_file_format,
                  output_file_path, analysis_mode, math_point):
         """Creates an object of the ConfigData class,
         assigns values to the main script parameters from a configuration file."""
-        self.__data_format = data_format.upper()
-        self.__data_file = data_file
-        self.__output_file_format = output_file_format.lower()
-        self.__output_file_path = output_file_path
-        self.__analysis_mode = analysis_mode.upper()
-        self.__math_point = math_point
+        self.data_format = data_format.upper()
+        self.data_file = data_file
+        self.output_file_format = output_file_format.lower()
+        self.output_file_path = output_file_path
+        self.analysis_mode = analysis_mode.upper()
+        self.math_point = math_point
 
     def verify_config_data(self) -> None:
         """Validates configuration data.
@@ -26,68 +24,66 @@ class ConfigFileData:
         and math point value (only for 'AFFL' mode) are checked for correctness.
         The data file and output file directory are checked for existence.
         If the check fails, an appropriate exception will be raised."""
-        if self.__analysis_mode == 'AFFL':
-            if not self.__math_point:
-                raise ConfigFileParsingError('"point" in the section [general]')
-            if self.__math_point == float('-inf') or self.__math_point == float('inf'):
-                raise ConfigFileParsingError('"point" in the section [general]')
+        if self.analysis_mode == 'AFFL':
+            if not self.math_point or self.math_point == float('-inf') or self.math_point == float('inf'):
+                raise ConfigFileError(f'{PARSING_ERROR}"point" in the section [general]')
             try:
-                self.__math_point = float(self.__math_point)
+                self.math_point = float(self.math_point)
             except Exception:
-                raise ConfigFileParsingError('"point" in the section [general]')
-        elif self.__analysis_mode == 'INTS':
-            self.__math_point = None
+                raise ConfigFileError(f'{PARSING_ERROR}"point" in the section [general]')
+        elif self.analysis_mode == 'INTS':
+            self.math_point = None
         else:
-            raise ConfigFileParsingError('"mode" in the section [general]')
+            raise ConfigFileError(f'{PARSING_ERROR}"mode" in the section [general]')
 
-        if self.__data_format not in ('JSON', 'TXT', 'XML'):
-            raise ConfigFileParsingError('"format" in the section [input]')
+        if self.data_format not in ('JSON', 'TXT', 'XML'):
+            raise ConfigFileError(f'{PARSING_ERROR}"format" in the section [input]')
 
-        input_file_path, input_file_type = splitext(self.__data_file)
-        if input_file_type and input_file_type[1:] != self.__data_format.lower():
-            raise ConfigFileParsingError('"format" and "path" in the section [input]')
+        input_file_path, input_file_type = splitext(self.data_file)
+        if input_file_type and input_file_type[1:] != self.data_format.lower():
+            raise ConfigFileError(f'{PARSING_ERROR}"format" and "path" in the section [input]')
 
-        if not self.__data_file:
-            raise ConfigFileParsingError('"path" in the section [input]')
-        if not isfile(normpath(self.__data_file)):
-            raise DataFileNotFoundError(self.__data_file)
+        if not self.data_file:
+            raise ConfigFileError(f'{PARSING_ERROR}"path" in the section [input]')
+        if not isfile(normpath(self.data_file)):
+            raise DataFileError(f'not found in {self.data_file}')
 
-        if self.__output_file_format not in ('json', 'txt', 'xml'):
-            raise ConfigFileParsingError('"format" in the section [output]')
+        if self.output_file_format not in ('json', 'txt', 'xml'):
+            raise ConfigFileError(f'{PARSING_ERROR}"format" in the section [output]')
 
-        if not self.__output_file_path:
-            raise ConfigFileParsingError('"path" in the section [output]')
-        output_dir = dirname(self.__output_file_path)
+        if not self.output_file_path:
+            raise ConfigFileError(f'{PARSING_ERROR}"path" in the section [output]')
+        output_dir = dirname(self.output_file_path)
         if not isdir(normpath(output_dir)):
-            raise OutputDirectoryNotFoundError(output_dir)
+            raise OutputDataError(f'directory not found in {output_dir}')
 
-        output_file_path, output_file_type = splitext(self.__output_file_path)
-        if output_file_type and output_file_type[1:] != self.__output_file_format.lower():
-            raise ConfigFileParsingError('"format" and "path" in the section [output]')
+        output_file_path, output_file_type = splitext(self.output_file_path)
+        if output_file_type and output_file_type[1:] != self.output_file_format.lower():
+            raise ConfigFileError(f'{PARSING_ERROR}"format" and "path" in the section [output]')
 
     def get_data_format(self) -> str:
         """Returns the data file format."""
-        return self.__data_format
+        return self.data_format
 
     def get_data_file(self) -> str:
         """Returns the path to the data file."""
-        return self.__data_file
+        return self.data_file
 
     def get_output_file_format(self) -> str:
         """Returns the output file format."""
-        return self.__output_file_format
+        return self.output_file_format
 
     def get_output_file_path(self) -> str:
         """Returns the path to the output file."""
-        return self.__output_file_path
+        return self.output_file_path
 
     def get_analysis_mode(self) -> str:
         """Returns the analysis mode."""
-        return self.__analysis_mode
+        return self.analysis_mode
 
     def get_math_point(self) -> float:
         """Returns the math point value."""
-        return self.__math_point
+        return self.math_point
 
 
 def parse_configuration_file(input_file: str) -> ConfigFileData:
@@ -95,7 +91,7 @@ def parse_configuration_file(input_file: str) -> ConfigFileData:
     Validates the configuration data from the given configuration file.
     Returns ConfigData class object with the main configuration arguments."""
     if not isfile(input_file):
-        raise ConfigFileNotFoundError(input_file)
+        raise ConfigFileError(f'not found: {input_file}')
     try:
         data_from_config_ini = ConfigParser()
         data_from_config_ini.read(input_file)
@@ -111,9 +107,9 @@ def parse_configuration_file(input_file: str) -> ConfigFileData:
                              'output_file_format': section_output.get('format'),
                              'output_file_path': section_output.get('path')}
     except KeyError as err:
-        raise ConfigFileParsingError(f'section [{err}]')
+        raise ConfigFileError(f'{PARSING_ERROR}section [{err}]')
     except ValueError:
-        raise ConfigFileParsingError('"point" in the section [general]')
+        raise ConfigFileError(f'{PARSING_ERROR}"point" in the section [general]')
     except Exception:
         print(f'Error! The parsing of the configuration file raised an exception:')
         raise

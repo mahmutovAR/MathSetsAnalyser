@@ -5,7 +5,7 @@ from os.path import join as os_path_join
 
 from chameleon import PageTemplateLoader
 
-from errors import OutputFileGeneratingError
+from errors import OutputDataError
 
 
 def output_script_data(config_data: 'ConfigData object', output_data: list):
@@ -33,7 +33,7 @@ def output_script_data(config_data: 'ConfigData object', output_data: list):
                 assert False, ('Internal error! output_script_data()'
                                '\noutput_file_format not JSON / TXT / XML')
     except Exception as err:
-        raise OutputFileGeneratingError(output_file_path, err)
+        raise OutputDataError(f'could not be generated in {output_file_path}\n{err}')
 
 
 def choose_name_for_output_file(file_format: str, file_path: str) -> str:

@@ -9,7 +9,7 @@ from tempfile import TemporaryDirectory
 from bs4 import BeautifulSoup
 
 import run_math_sets_analyser as run_msa
-from math_analyser import *
+from math_analyser import parse_configuration_file
 
 
 class TestConfig:

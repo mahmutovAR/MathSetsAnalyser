@@ -1,3 +1,5 @@
+from bisect import bisect_left
+
 from math_analyser import format_math_ranges, get_endpoints_of_two_math_ranges, remove_duplicate_endpoints
 
 
@@ -78,79 +80,56 @@ def closest_point_of_two_ranges(point: float, range_1: tuple | float, range_2: t
         return [start_point(range_2)]
 
 
-def determine_closest_point_of_math_intersection(math_point: float, math_intersection: list,
-                                                 subrange_index: int = 0, slice_length: int = 0) -> list:
-    """Recursive function returns a math point if it is at the intersection of the initial math ranges
-    or the closest endpoint(s) to the math point.
-    Function arguments are
-    - math point
-    - math ranges list;
-    - math range list index;
-    - math ranges list length.
-    On initial run, the function gets a math point, math ranges list, index 0, and math ranges list length."""
+def determine_closest_point_of_math_intersection(math_point: float, math_intersection: list) -> list:
+    """Returns a math point if it is at the intersection of the initial math ranges
+    or the closest endpoint(s) to the math point."""
     if not math_intersection or math_intersection == [None]:
         return [None]
 
-    first_subrange = math_intersection[0]
-    last_subrange = math_intersection[-1]
+    all_endpoints = list()
+    for endpoint in math_intersection:
+        if isinstance(endpoint, tuple):
+            if endpoint[0] == float('-inf'):
+                all_endpoints.append(endpoint[1])
+            else:
+                all_endpoints.append(endpoint[0])
+        else:
+            all_endpoints.append(endpoint)
 
-    mid_index = subrange_index + slice_length // 2
-    mid_subrange = math_intersection[mid_index]
+    index = bisect_left(all_endpoints, math_point)
 
-    sub_ranges = math_intersection[subrange_index: subrange_index + slice_length + 1]
-
-    if len(sub_ranges) == 1:
-        one_subrange = sub_ranges[0]
-        if (math_point == one_subrange or
-            (math_point >= start_point(one_subrange) and math_point <= end_point(one_subrange))):
+    if index == 0:
+        subrange = math_intersection[0]
+        if (math_point == subrange or
+                (math_point >= start_point(subrange) and math_point <= end_point(subrange))):
             return [math_point]
-        elif math_point < start_point(one_subrange):
-            if one_subrange == first_subrange:
-                return [start_point(one_subrange)]
-            else:
-                return closest_point_of_two_ranges(math_point,
-                                                   math_intersection[subrange_index - 1],
-                                                   math_intersection[subrange_index])
-        elif math_point > start_point(one_subrange):
-            if one_subrange == last_subrange:
-                return [end_point(one_subrange)]
-            else:
-                return closest_point_of_two_ranges(math_point,
-                                                   math_intersection[subrange_index],
-                                                   math_intersection[subrange_index + 1])
+        return [start_point(subrange)]
 
-    if (math_point == mid_subrange or
-            (math_point >= start_point(mid_subrange) and math_point <= end_point(mid_subrange))):
-        return [math_point]
+    elif index > len(math_intersection) - 1:
+        subrange = math_intersection[-1]
+        if (math_point == subrange or
+                (math_point >= start_point(subrange) and math_point <= end_point(subrange))):
+            return [math_point]
+        elif math_point > end_point(subrange):
+            return [end_point(subrange)]
+        elif len(math_intersection) > 1:
+            subrange = math_intersection[-2]
+            if (math_point == subrange or
+                    (math_point >= start_point(subrange) and math_point <= end_point(subrange))):
+                return [math_point]
+            return closest_point_of_two_ranges(math_point, math_intersection[-2], math_intersection[-1])
 
-    elif math_point < start_point(mid_subrange):
-        if mid_subrange == first_subrange:
-            return [start_point(mid_subrange)]
-        else:
-            prev_subrange = math_intersection[mid_index - 1]
-            if (round(abs(math_point - end_point(prev_subrange)), 3)
-                    == round(abs(math_point - start_point(mid_subrange)), 3)):
-                return [end_point(prev_subrange), start_point(mid_subrange)]
-            elif round(abs(math_point - end_point(prev_subrange)), 3) > round(abs(math_point - start_point(mid_subrange)), 3):
-                return [start_point(mid_subrange)]
-            else:
-                return determine_closest_point_of_math_intersection(math_point,
-                                                                    math_intersection,
-                                                                    subrange_index,
-                                                                    slice_length // 2 - 1)
+    else:
+        subrange = math_intersection[index]
 
-    elif math_point > start_point(mid_subrange):
-        if mid_subrange == last_subrange:
-            return [end_point(mid_subrange)]
-        else:
-            next_subrange = math_intersection[mid_index + 1]
-            if (round(abs(math_point - end_point(mid_subrange)), 3)
-                    == round(abs(math_point - start_point(next_subrange)), 3)):
-                return [end_point(mid_subrange), start_point(next_subrange)]
-            elif round(abs(math_point - end_point(mid_subrange)), 3) < round(abs(math_point - start_point(next_subrange)), 3):
-                return [end_point(mid_subrange)]
-            else:
-                return determine_closest_point_of_math_intersection(math_point,
-                                                                    math_intersection,
-                                                                    mid_index + 1,
-                                                                    slice_length - slice_length // 2 - 1)
+        if (math_point == subrange or
+                (math_point >= start_point(subrange) and math_point <= end_point(subrange))):
+            return [math_point]
+
+        elif len(math_intersection) > 1:
+            subrange = math_intersection[index - 1]
+            if (math_point == subrange or
+                    (math_point >= start_point(subrange) and math_point <= end_point(subrange))):
+                return [math_point]
+
+            return closest_point_of_two_ranges(math_point, math_intersection[index - 1], math_intersection[index])

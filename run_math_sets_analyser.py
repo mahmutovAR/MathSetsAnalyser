@@ -48,7 +48,7 @@ def process_mode_affiliation(script_config_data: 'ConfigData object'):
     """Determines and outputs file with the nearest endpoint(s) to predetermined point."""
     math_intersection = determine_initial_math_sets_intersection(script_config_data)
     math_point = script_config_data.get_math_point()
-    result_data = determine_closest_point_of_math_intersection(math_point, math_intersection, 0, len(math_intersection))
+    result_data = determine_closest_point_of_math_intersection(math_point, math_intersection)
     output_script_data(script_config_data, result_data)
 
 
