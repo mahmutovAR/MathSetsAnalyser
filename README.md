@@ -6,6 +6,7 @@ The initial **math sets** are entered into the script via **data file**.
 The result of the script is the **output file**.
 ***
 
+
 ### Mode `INTERSECTION` (`INTS` in `config.ini`) analyzes the math sets.
 Script returns the intersection of the initial **math sets**.
 
@@ -14,24 +15,24 @@ Script returns the predetermined **point**, if it belongs to the initial **math 
 or the closest endpoint(s) to the predetermined **point** otherwise.
 ***
 
-## Installation
-**Requirements**
-* `Python` 3.9+
-* `bs4` (tested to work with >= 0.0.2)
-* `chameleon` (tested to work with >= 4.5.4)  
-* `lxml` (tested to work with >=5.1.0)
-* `pytest` (tested to work with ==8.2.2)  
 
-**Note:** The packages can be installed by running `python3 -m pip install -r requirements.txt`
+## Installation
+* [Python](https://www.python.org/downloads/) (3.12)  
+ 
+The Python packages can be installed by running  
+```commandline
+python3 -m pip install -r requirements.txt
+```
 ***
 
 
 ## Quick Start Guide
 1. Run the `create_sample.py` script.  
-It will create the `config.ini` sample configuration file and the `data file.txt` file with sample data.
+    It will create the `config.ini` sample configuration file and the `data file.txt` file with sample data.
 2. Then, run the `run_math_sets_analyser.py` script.  
-A new file `script_result.xml` will be created that contains the calculation results.
+    A new file `script_result.xml` will be created that contains the calculation results.
 ***
+
 
 ## Running MathSetsAnalyser
 For math analysis of input data **as a script**:
@@ -39,8 +40,13 @@ For math analysis of input data **as a script**:
 * create data file with initial math sets  
 * run `python run_math_sets_analyser.py`  
 
-**For testing** MathSetsAnalyser run `pytest`
+
+### To test MathSetsAnalyser run
+```commandline
+pytest
+```
 ***
+
 
 ### The configuration file `config.ini` has the following structure:
 `[general]`  
@@ -146,10 +152,9 @@ Examples of initial **math sets** for `JSON` data file:
 ***
 
 ### Files and directories:
+* `errors/` exception package
+* `math_analyser/` plug-in modules
+* `tests/` test module
 * `create_sample.py` script to generate sample source files
-- `run_math_sets_analyser.py` math_sets_analyser launcher
-* `test_math_sets_analyser.py` tests
-- `requirements.txt` required packages  
-* `./errors` exception package
-- `./math_analyser` plug-in modules
-* `./tests` test module package
+* `requirements.txt` required packages 
+* `run_math_sets_analyser.py` math_sets_analyser launcher
